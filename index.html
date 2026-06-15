@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>রক্তবন্ধু — Blood Donation</title>
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:#fafafa;min-height:100vh;}
+
+    /* Splash */
+    #splash{position:fixed;inset:0;background:linear-gradient(135deg,#7f1d1d,#dc2626);
+      display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px;}
+    #splash .sp-icon{width:64px;height:64px;background:rgba(255,255,255,.15);border-radius:18px;
+      display:flex;align-items:center;justify-content:center;}
+    #splash p{color:#fecaca;font-size:14px;}
+    .spinner{width:28px;height:28px;border:3px solid rgba(255,255,255,.3);
+      border-top-color:white;border-radius:50%;animation:spin .8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* Navbar */
+    #app{display:none;}
+    .navbar{background:white;border-bottom:1px solid #fee2e2;position:sticky;top:0;z-index:100;
+      box-shadow:0 1px 8px rgba(220,38,38,.08);}
+    .nav-inner{max-width:1100px;margin:0 auto;padding:0 20px;height:60px;
+      display:flex;align-items:center;justify-content:space-between;}
+    .nav-logo{display:flex;align-items:center;gap:10px;cursor:pointer;}
+    .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#dc2626,#991b1b);
+      border-radius:10px;display:flex;align-items:center;justify-content:center;}
+    .logo-text{font-weight:800;font-size:16px;color:#dc2626;line-height:1;}
+    .logo-sub{font-size:10px;color:#9ca3af;}
+    .nav-links{display:flex;align-items:center;gap:4px;}
+    .nl{background:none;border:none;padding:8px 14px;border-radius:8px;font-size:13px;
+      font-weight:500;color:#6b7280;cursor:pointer;transition:all .15s;}
+    .nl:hover{background:#fef2f2;color:#dc2626;}
+    .nl.active{background:#fef2f2;color:#dc2626;font-weight:700;}
+    .nav-auth{display:flex;align-items:center;gap:10px;}
+    .btn-signin{background:linear-gradient(135deg,#dc2626,#991b1b);color:white;border:none;
+      border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;
+      display:flex;align-items:center;gap:6px;transition:opacity .15s;}
+    .btn-signin:hover{opacity:.9;}
+    .btn-signout{background:none;border:1px solid #e5e7eb;border-radius:8px;padding:7px 12px;
+      font-size:12px;color:#6b7280;cursor:pointer;}
+    .btn-signout:hover{background:#fef2f2;color:#dc2626;border-color:#fca5a5;}
+
+    /* Layout */
+    .content{max-width:1100px;margin:0 auto;padding:0 20px;}
+    .page{display:none;padding:28px 0;}
+    .page.active{display:block;}
+
+    /* Hero */
+    .hero{background:linear-gradient(135deg,#7f1d1d,#dc2626,#c2410c);border-radius:20px;
+      padding:48px 40px;position:relative;overflow:hidden;margin-bottom:24px;}
+    .hero::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;
+      background:rgba(255,255,255,.05);border-radius:50%;}
+    .hero::after{content:'';position:absolute;bottom:-60px;right:80px;width:140px;height:140px;
+      background:rgba(255,255,255,.05);border-radius:50%;}
+    .hero-inner{position:relative;}
+    .hero-badge{color:#fca5a5;font-size:13px;font-weight:600;margin-bottom:16px;}
+    .hero h1{color:white;font-size:36px;font-weight:800;line-height:1.2;margin-bottom:12px;}
+    .hero p{color:#fecaca;font-size:16px;max-width:480px;margin-bottom:28px;}
+    .hero-btns{display:flex;gap:12px;flex-wrap:wrap;}
+    .btn-hp{background:white;color:#dc2626;border:none;border-radius:10px;padding:12px 24px;
+      font-size:14px;font-weight:700;cursor:pointer;transition:transform .15s;}
+    .btn-hp:hover{transform:translateY(-1px);}
+    .btn-hs{background:rgba(255,255,255,.15);color:white;border:2px solid rgba(255,255,255,.4);
+      border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;
+      transition:background .15s;}
+    .btn-hs:hover{background:rgba(255,255,255,.25);}
+
+    /* Stats */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:24px;}
+    .stat-card{background:white;border-radius:14px;padding:20px;text-align:center;
+      border:1px solid #fef2f2;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+    .stat-icon{font-size:22px;margin-bottom:8px;}
+    .stat-val{font-size:24px;font-weight:800;color:#111827;}
+    .stat-label{font-size:12px;color:#6b7280;margin-top:2px;}
+
+    /* How it works */
+    .hiw{background:white;border-radius:16px;padding:28px 24px;border:1px solid #fef2f2;margin-bottom:28px;}
+    .hiw-title{font-size:18px;font-weight:800;color:#111827;margin-bottom:16px;}
+    .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;}
+    .step{display:flex;gap:14px;align-items:flex-start;}
+    .step-num{width:36px;height:36px;min-width:36px;background:linear-gradient(135deg,#dc2626,#991b1b);
+      border-radius:10px;display:flex;align-items:center;justify-content:center;
+      color:white;font-weight:800;font-size:14px;}
+    .step-title{font-weight:700;color:#111827;font-size:14px;margin-bottom:4px;}
+    .step-desc{font-size:13px;color:#6b7280;}
+
+    /* Section */
+    .sec-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+    .sec-title{font-size:18px;font-weight:800;color:#111827;}
+    .sec-link{color:#dc2626;font-size:13px;font-weight:600;background:none;border:none;cursor:pointer;}
+
+    /* Donor Cards */
+    .donors-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+    .donor-card{background:white;border-radius:14px;padding:18px 20px;
+      box-shadow:0 2px 12px rgba(0,0,0,.07);border:1px solid #fef2f2;
+      position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s;}
+    .donor-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(220,38,38,.12);}
+    .blood-badge{position:absolute;top:0;right:0;color:white;font-size:13px;font-weight:700;
+      padding:6px 14px;border-bottom-left-radius:10px;letter-spacing:.5px;}
+    .d-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+    .d-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;
+      justify-content:center;font-size:18px;font-weight:700;overflow:hidden;flex-shrink:0;}
+    .d-name{font-weight:700;color:#111827;font-size:15px;}
+    .d-loc{color:#6b7280;font-size:12px;margin-top:2px;}
+    .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+    .chip{background:#f3f4f6;color:#6b7280;border-radius:6px;padding:3px 8px;font-size:11px;}
+    .chip.av{background:#dcfce7;color:#16a34a;}
+    .chip.nav{background:#fee2e2;color:#dc2626;}
+    .btn-phone{width:100%;background:linear-gradient(135deg,#dc2626,#991b1b);color:white;
+      border:none;border-radius:8px;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer;
+      transition:opacity .15s;}
+    .btn-phone:hover{opacity:.9;}
+    .phone-box{display:flex;align-items:center;gap:8px;background:#fef2f2;border-radius:8px;
+      padding:9px 12px;font-size:14px;font-weight:600;color:#dc2626;}
+
+    /* Search Filters */
+    .filter-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+    .f-select{border:1.5px solid #e5e7eb;border-radius:8px;padding:10px 14px;font-size:14px;
+      background:white;color:#374151;outline:none;cursor:pointer;}
+    .f-select:focus{border-color:#dc2626;}
+    .btn-clear{background:#fee2e2;color:#dc2626;border:none;border-radius:8px;
+      padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;}
+    .blood-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+    .bpill{border:1.5px solid #e5e7eb;background:white;color:#374151;border-radius:8px;
+      padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;}
+    .bpill.on{background:#dc2626;color:white;border-color:#dc2626;}
+
+    /* Donate Form */
+    .donate-card{background:white;border-radius:16px;padding:28px;
+      border:1px solid #fef2f2;box-shadow:0 2px 12px rgba(0,0,0,.06);max-width:560px;}
+    .fl{font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;}
+    .fgroup{margin-bottom:16px;}
+    .finput{width:100%;border:1.5px solid #e5e7eb;border-radius:8px;padding:10px 14px;
+      font-size:14px;outline:none;color:#111;transition:border-color .15s;}
+    .finput:focus{border-color:#dc2626;}
+    .fselect{width:100%;border:1.5px solid #e5e7eb;border-radius:8px;padding:10px 14px;
+      font-size:14px;background:white;color:#374151;outline:none;cursor:pointer;}
+    .fselect:focus{border-color:#dc2626;}
+    .blood-picker{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+    .bpick{border:1.5px solid #e5e7eb;background:white;color:#374151;border-radius:8px;
+      padding:8px 14px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;}
+    .bpick.sel{background:#dc2626;color:white;border-color:#dc2626;}
+    .btn-register{width:100%;background:linear-gradient(135deg,#dc2626,#991b1b);color:white;
+      border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;
+      cursor:pointer;margin-top:8px;transition:opacity .15s;}
+    .btn-register:hover{opacity:.9;}
+    .btn-register:disabled{opacity:.5;cursor:not-allowed;}
+    .user-bar{display:flex;align-items:center;gap:12px;background:#fef2f2;
+      border-radius:10px;padding:12px 16px;margin-bottom:20px;}
+
+    /* Auth Required / Success */
+    .auth-req,.success-box{border-radius:14px;padding:40px;text-align:center;max-width:420px;}
+    .auth-req{background:#fef2f2;border:1px solid #fca5a5;}
+    .success-box{background:#f0fdf4;border:1px solid #86efac;}
+
+    /* Toast */
+    #toast{position:fixed;top:20px;right:20px;z-index:2000;padding:12px 20px;border-radius:10px;
+      font-size:14px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.12);display:none;
+      align-items:center;gap:8px;max-width:320px;animation:slideIn .25s ease;}
+    @keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+    #toast.s{background:#dcfce7;border:1px solid #86efac;color:#16a34a;}
+    #toast.e{background:#fee2e2;border:1px solid #fca5a5;color:#dc2626;}
+    #toast.i{background:#eff6ff;border:1px solid #93c5fd;color:#1d4ed8;}
+
+    .loading,.empty{text-align:center;padding:48px;color:#9ca3af;font-size:14px;}
+    footer{border-top:1px solid #fef2f2;margin-top:48px;padding:24px 20px;text-align:center;}
+
+    @media(max-width:640px){
+      .hero{padding:32px 24px;} .hero h1{font-size:26px;} .nav-links{display:none;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- Splash -->
+<div id="splash">
+  <div class="sp-icon">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+      <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>
+    </svg>
+  </div>
+  <p>রক্তবন্ধু লোড হচ্ছে...</p>
+  <div class="spinner"></div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app">
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="nav-logo" onclick="showPage('home')">
+        <div class="logo-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+            <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-text">রক্তবন্ধু</div>
+          <div class="logo-sub">Blood Donation</div>
+        </div>
+      </div>
+
+      <div class="nav-links">
+        <button class="nl active" id="nav-home"   onclick="showPage('home')">হোম</button>
+        <button class="nl"        id="nav-search" onclick="showPage('search')">রক্ত খুঁজুন</button>
+        <button class="nl"        id="nav-donate" onclick="showPage('donate')">দাতা হন</button>
+      </div>
+
+      <div class="nav-auth" id="nav-auth">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <!-- HOME PAGE -->
+    <div class="page active" id="page-home">
+      <div class="hero">
+        <div class="hero-inner">
+          <div class="hero-badge">❤️ বাংলাদেশের রক্তদান প্ল্যাটফর্ম</div>
+          <h1>একটি রক্তের ফোঁটা<br/>একটি জীবন বাঁচায়</h1>
+          <p>রক্তবন্ধু — যেখানে দাতা ও গ্রহীতা এক ছাদের নিচে মিলিত হয়। আজই যোগ দিন।</p>
+          <div class="hero-btns">
+            <button class="btn-hp" onclick="showPage('search')">🔍 রক্ত খুঁজুন</button>
+            <button class="btn-hs" onclick="showPage('donate')">💉 দাতা হন</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-val" id="s-donors">০</div><div class="stat-label">নিবন্ধিত দাতা</div></div>
+        <div class="stat-card"><div class="stat-icon">🩸</div><div class="stat-val">৮টি</div><div class="stat-label">রক্তের গ্রুপ</div></div>
+        <div class="stat-card"><div class="stat-icon">📍</div><div class="stat-val">৬৪টি</div><div class="stat-label">জেলা কভারেজ</div></div>
+        <div class="stat-card"><div class="stat-icon">🛡️</div><div class="stat-val">১০০%</div><div class="stat-label">নিরাপদ ও বিশ্বস্ত</div></div>
+      </div>
+
+      <div class="hiw">
+        <div class="hiw-title">কীভাবে কাজ করে?</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">১</div>
+            <div><div class="step-title">Google দিয়ে সাইন ইন</div><div class="step-desc">Google অ্যাকাউন্ট দিয়ে এক ক্লিকে রেজিস্ট্রেশন করুন</div></div>
+          </div>
+          <div class="step">
+            <div class="step-num">২</div>
+            <div><div class="step-title">প্রোফাইল তৈরি করুন</div><div class="step-desc">রক্তের গ্রুপ, জেলা ও যোগাযোগ তথ্য দিয়ে দাতা হন</div></div>
+          </div>
+          <div class="step">
+            <div class="step-num">৩</div>
+            <div><div class="step-title">রক্ত খুঁজুন বা দিন</div><div class="step-desc">প্রয়োজনে দাতা খুঁজুন অথবা কাউকে রক্ত দান করুন</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sec-header">
+          <div class="sec-title">সাম্প্রতিক দাতারা</div>
+          <button class="sec-link" onclick="showPage('search')">সব দেখুন →</button>
+        </div>
+        <div class="donors-grid" id="home-donors"><div class="loading">লোড হচ্ছে...</div></div>
+      </div>
+    </div>
+
+    <!-- SEARCH PAGE -->
+    <div class="page" id="page-search">
+      <h2 style="font-size:22px;font-weight:800;color:#111827;margin-bottom:4px;">রক্তদাতা খুঁজুন</h2>
+      <p style="color:#6b7280;font-size:14px;margin-bottom:24px;">রক্তের গ্রুপ ও জেলা দিয়ে দাতা ফিল্টার করুন</p>
+
+      <div class="filter-row">
+        <select class="f-select" id="fb" onchange="applyFilters()">
+          <option value="">সব রক্তের গ্রুপ</option>
+          <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+          <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+        </select>
+        <select class="f-select" id="fd" onchange="applyFilters()">
+          <option value="">সব জেলা</option>
+          <option>ঢাকা</option><option>চট্টগ্রাম</option><option>ময়মনসিংহ</option>
+          <option>সিলেট</option><option>রাজশাহী</option><option>খুলনা</option>
+          <option>বরিশাল</option><option>রংপুর</option><option>কুমিল্লা</option>
+          <option>গাজীপুর</option><option>নারায়ণগঞ্জ</option><option>বগুড়া</option>
+          <option>ফরিদপুর</option><option>যশোর</option><option>নোয়াখালী</option>
+        </select>
+        <button class="btn-clear" onclick="clearFilters()">✕ মুছুন</button>
+      </div>
+
+      <div class="blood-pills" id="bpills"></div>
+      <div style="color:#6b7280;font-size:13px;margin-bottom:16px;" id="rcount"></div>
+      <div class="donors-grid" id="search-donors"><div class="loading">লোড হচ্ছে...</div></div>
+    </div>
+
+    <!-- DONATE PAGE -->
+    <div class="page" id="page-donate">
+      <h2 style="font-size:22px;font-weight:800;color:#111827;margin-bottom:4px;">দাতা হিসেবে নিবন্ধন করুন</h2>
+      <p style="color:#6b7280;font-size:14px;margin-bottom:24px;">আপনার তথ্য দিয়ে রক্তদানে এগিয়ে আসুন</p>
+      <div id="donate-content"></div>
+    </div>
+
+  </div>
+
+  <footer>
+    <div style="font-size:13px;font-weight:700;color:#dc2626;margin-bottom:4px;">❤️ রক্তবন্ধু</div>
+    <div style="font-size:12px;color:#9ca3af;">© 2025 রক্তবন্ধু — জীবন বাঁচানোর প্ল্যাটফর্ম</div>
+  </footer>
+</div>
+
+<script type="module">
+  // ============================================================
+  //  Firebase Config (আপনার কনফিগ hardcoded করা হয়েছে)
+  // ============================================================
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAG0p0r561ZqcLtH6W93qR7lHsRz1Nq14Y",
+    authDomain:        "fgfg-7e830.firebaseapp.com",
+    projectId:         "fgfg-7e830",
+    storageBucket:     "fgfg-7e830.firebasestorage.app",
+    messagingSenderId: "968514569947",
+    appId:             "1:968514569947:web:c1bf770ec055587deb6efe",
+    measurementId:     "G-QS7NF21WF8"
+  };
+
+  // ============================================================
+  //  State
+  // ============================================================
+  let currentUser = null;
+  let allDonors   = [];
+  let selBlood    = '';
+  let userIsDonor = false;
+
+  const BLOOD_COLORS = {
+    'A+':'#dc2626','A-':'#b91c1c','B+':'#c2410c','B-':'#9a3412',
+    'AB+':'#7c3aed','AB-':'#6d28d9','O+':'#d97706','O-':'#b45309'
+  };
+
+  // ============================================================
+  //  Firebase Init
+  // ============================================================
+  const { initializeApp }       = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+  const { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+    = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+  const { getFirestore, collection, addDoc, getDocs, query, where, orderBy, onSnapshot, serverTimestamp }
+    = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+  const fbApp  = initializeApp(firebaseConfig);
+  const auth   = getAuth(fbApp);
+  const db     = getFirestore(fbApp);
+  const gProv  = new GoogleAuthProvider();
+
+  // ============================================================
+  //  Auth
+  // ============================================================
+  window.doSignIn = async () => {
+    try { await signInWithPopup(auth, gProv); }
+    catch(e) { if(e.code !== 'auth/popup-closed-by-user') showToast('সাইন ইন ব্যর্থ: '+e.code,'e'); }
+  };
+
+  window.doSignOut = async () => {
+    await signOut(auth);
+    showToast('সাইন আউট সফল হয়েছে','i');
+  };
+
+  onAuthStateChanged(auth, async user => {
+    currentUser = user;
+    renderNavAuth();
+    if (user) {
+      const q = query(collection(db,'donors'), where('userId','==',user.uid));
+      const sn = await getDocs(q);
+      userIsDonor = !sn.empty;
+    } else { userIsDonor = false; }
+    renderDonatePage();
+    renderHomeDonors();
+    applyFilters();
+  });
+
+  // ============================================================
+  //  Firestore — Real-time donor list
+  // ============================================================
+  const donorsQ = query(collection(db,'donors'), orderBy('createdAt','desc'));
+  onSnapshot(donorsQ, snap => {
+    allDonors = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    document.getElementById('s-donors').textContent = allDonors.length + '+';
+    renderHomeDonors();
+    applyFilters();
+  });
+
+  // ============================================================
+  //  Donor Registration
+  // ============================================================
+  window.registerDonor = async () => {
+    if (!currentUser) { showToast('আগে সাইন ইন করুন','e'); return; }
+    const bloodGroup = document.querySelector('.bpick.sel')?.dataset.blood;
+    const district   = document.getElementById('f-dist')?.value;
+    const upazila    = document.getElementById('f-upazila')?.value.trim();
+    const phone      = document.getElementById('f-phone')?.value.trim();
+    const available  = document.getElementById('f-avail')?.checked ?? true;
+
+    if (!bloodGroup) { showToast('রক্তের গ্রুপ নির্বাচন করুন!','e'); return; }
+    if (!district)   { showToast('জেলা নির্বাচন করুন!','e'); return; }
+    if (!phone)      { showToast('মোবাইল নম্বর দিন!','e'); return; }
+    if (!/^01[3-9]\d{8}$/.test(phone)) { showToast('সঠিক মোবাইল নম্বর দিন (01XXXXXXXXX)','e'); return; }
+
+    const btn = document.getElementById('btn-reg');
+    btn.disabled = true; btn.textContent = 'নিবন্ধন হচ্ছে...';
+
+    try {
+      await addDoc(collection(db,'donors'), {
+        name:        currentUser.displayName || 'অজানা',
+        email:       currentUser.email,
+        photo:       currentUser.photoURL || '',
+        bloodGroup, district,
+        upazila:     upazila || district,
+        phone, available,
+        userId:      currentUser.uid,
+        donations:   0,
+        lastDonated: 'নতুন দাতা',
+        createdAt:   serverTimestamp(),
+      });
+      userIsDonor = true;
+      showToast('সফলভাবে দাতা হিসেবে নিবন্ধিত হয়েছেন! 🩸');
+      renderDonatePage();
+    } catch(e) {
+      showToast('ত্রুটি: ' + e.message,'e');
+      btn.disabled = false; btn.textContent = '🩸 দাতা হিসেবে নিবন্ধন করুন';
+    }
+  };
+
+  // ============================================================
+  //  Render Helpers
+  // ============================================================
+  function donorCard(d) {
+    const c   = BLOOD_COLORS[d.bloodGroup] || '#dc2626';
+    const avC = d.available
+      ? '<span class="chip av">✓ উপলব্ধ</span>'
+      : '<span class="chip nav">✗ অনুপলব্ধ</span>';
+    const ph = currentUser
+      ? `<div class="phone-box">📞 ${d.phone}</div>`
+      : `<button class="btn-phone" onclick="doSignIn()">📞 নম্বর দেখতে সাইন ইন করুন</button>`;
+    const av = d.photo
+      ? `<img src="${d.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<span style=font-size:18px;font-weight:700;color:${c};>${d.name.charAt(0)}</span>'">`
+      : `<span style="font-size:18px;font-weight:700;color:${c};">${d.name.charAt(0)}</span>`;
+    return `
+      <div class="donor-card">
+        <div class="blood-badge" style="background:${c}">${d.bloodGroup}</div>
+        <div class="d-top">
+          <div class="d-avatar" style="background:${c}22;">${av}</div>
+          <div>
+            <div class="d-name">${d.name}</div>
+            <div class="d-loc">📍 ${d.upazila||d.district}, ${d.district}</div>
+          </div>
+        </div>
+        <div class="chips">
+          <span class="chip">🕐 ${d.lastDonated||'নতুন দাতা'}</span>
+          <span class="chip">🩸 ${d.donations||0} বার দান</span>
+          ${avC}
+        </div>
+        ${ph}
+      </div>`;
+  }
+
+  function renderHomeDonors() {
+    const el = document.getElementById('home-donors'); if(!el) return;
+    const r = allDonors.slice(0,3);
+    el.innerHTML = r.length ? r.map(donorCard).join('') : '<div class="empty">এখনো কোনো দাতা নেই</div>';
+  }
+
+  // ============================================================
+  //  Search & Filter
+  // ============================================================
+  function initBloodPills() {
+    document.getElementById('bpills').innerHTML =
+      ['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(g =>
+        `<button class="bpill" data-g="${g}" onclick="togglePill('${g}')">${g}</button>`
+      ).join('');
+  }
+
+  window.togglePill = g => {
+    selBlood = selBlood === g ? '' : g;
+    document.getElementById('fb').value = selBlood;
+    document.querySelectorAll('.bpill').forEach(p => p.classList.toggle('on', p.dataset.g === selBlood));
+    applyFilters();
+  };
+
+  window.applyFilters = () => {
+    const bl = document.getElementById('fb')?.value || '';
+    const di = document.getElementById('fd')?.value || '';
+    if(bl !== selBlood){
+      selBlood = bl;
+      document.querySelectorAll('.bpill').forEach(p => p.classList.toggle('on', p.dataset.g === bl));
+    }
+    const filtered = allDonors.filter(d => (!bl||d.bloodGroup===bl) && (!di||d.district===di));
+    const rc = document.getElementById('rcount');
+    const sd = document.getElementById('search-donors');
+    if(rc) rc.textContent = `${filtered.length} জন দাতা পাওয়া গেছে`;
+    if(sd) sd.innerHTML = filtered.length
+      ? filtered.map(donorCard).join('')
+      : '<div class="empty">⚠️ কোনো দাতা পাওয়া যায়নি</div>';
+  };
+
+  window.clearFilters = () => {
+    document.getElementById('fb').value = '';
+    document.getElementById('fd').value = '';
+    selBlood = '';
+    document.querySelectorAll('.bpill').forEach(p => p.classList.remove('on'));
+    applyFilters();
+  };
+
+  // ============================================================
+  //  Donate Page
+  // ============================================================
+  function renderDonatePage() {
+    const el = document.getElementById('donate-content'); if(!el) return;
+
+    if(!currentUser){
+      el.innerHTML = `
+        <div class="auth-req">
+          <div style="font-size:42px;margin-bottom:12px;">🩸</div>
+          <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:8px;">আগে সাইন ইন করুন</div>
+          <div style="color:#6b7280;font-size:14px;margin-bottom:20px;">দাতা হতে হলে Google অ্যাকাউন্ট দিয়ে লগইন করুন</div>
+          <button class="btn-register" onclick="doSignIn()">Google দিয়ে সাইন ইন করুন</button>
+        </div>`; return;
+    }
+
+    if(userIsDonor){
+      el.innerHTML = `
+        <div class="success-box">
+          <div style="font-size:42px;margin-bottom:12px;">✅</div>
+          <div style="font-size:18px;font-weight:800;color:#15803d;margin-bottom:8px;">আপনি ইতোমধ্যে নিবন্ধিত!</div>
+          <div style="color:#6b7280;font-size:14px;margin-bottom:20px;">আপনার তথ্য দাতার তালিকায় আছে। যারা রক্ত খুঁজছেন তারা আপনাকে পাবেন।</div>
+          <button onclick="showPage('search')" style="background:#16a34a;color:white;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;">
+            দাতার তালিকা দেখুন →
+          </button>
+        </div>`; return;
+    }
+
+    const photo = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName||'U')}&background=dc2626&color=fff&size=64`;
+    el.innerHTML = `
+      <div class="donate-card">
+        <div class="user-bar">
+          <img src="${photo}" style="width:40px;height:40px;border-radius:50%;" onerror="this.style.display='none'" />
+          <div>
+            <div style="font-weight:700;color:#111827;font-size:14px;">${currentUser.displayName||''}</div>
+            <div style="color:#6b7280;font-size:12px;">${currentUser.email}</div>
+          </div>
+        </div>
+
+        <div class="fgroup">
+          <label class="fl">রক্তের গ্রুপ *</label>
+          <div class="blood-picker">
+            ${['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(g =>
+              `<button class="bpick" data-blood="${g}" onclick="pickBlood(this)">${g}</button>`
+            ).join('')}
+          </div>
+        </div>
+
+        <div class="fgroup">
+          <label class="fl">জেলা *</label>
+          <select id="f-dist" class="fselect" style="margin-top:6px;">
+            <option value="">জেলা নির্বাচন করুন</option>
+            <option>ঢাকা</option><option>চট্টগ্রাম</option><option>ময়মনসিংহ</option>
+            <option>সিলেট</option><option>রাজশাহী</option><option>খুলনা</option>
+            <option>বরিশাল</option><option>রংপুর</option><option>কুমিল্লা</option>
+            <option>গাজীপুর</option><option>নারায়ণগঞ্জ</option><option>বগুড়া</option>
+            <option>ফরিদপুর</option><option>যশোর</option><option>নোয়াখালী</option>
+          </select>
+        </div>
+
+        <div class="fgroup">
+          <label class="fl">উপজেলা / এলাকা</label>
+          <input id="f-upazila" class="finput" placeholder="যেমন: মুক্তাগাছা" style="margin-top:6px;" />
+        </div>
+
+        <div class="fgroup">
+          <label class="fl">মোবাইল নম্বর *</label>
+          <input id="f-phone" class="finput" placeholder="01XXXXXXXXX" style="margin-top:6px;" />
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <input type="checkbox" id="f-avail" checked style="width:16px;height:16px;accent-color:#dc2626;" />
+          <label for="f-avail" style="font-size:14px;color:#374151;cursor:pointer;">আমি এখন রক্ত দিতে উপলব্ধ</label>
+        </div>
+
+        <button id="btn-reg" class="btn-register" onclick="registerDonor()">🩸 দাতা হিসেবে নিবন্ধন করুন</button>
+      </div>`;
+  }
+
+  window.pickBlood = btn => {
+    document.querySelectorAll('.bpick').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+  };
+
+  // ============================================================
+  //  Nav Auth Bar
+  // ============================================================
+  function renderNavAuth() {
+    const el = document.getElementById('nav-auth');
+    if(currentUser){
+      const name  = (currentUser.displayName||'User').split(' ')[0];
+      const photo = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName||'U')}&background=dc2626&color=fff&size=64`;
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;">
+          <img src="${photo}" style="width:32px;height:32px;border-radius:50%;border:2px solid #fca5a5;"
+               onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=dc2626&color=fff&size=64'" />
+          <span style="font-size:13px;font-weight:600;color:#374151;">${name}</span>
+        </div>
+        <button class="btn-signout" onclick="doSignOut()">বের হন</button>`;
+    } else {
+      el.innerHTML = `
+        <button class="btn-signin" onclick="doSignIn()">
+          <svg width="14" height="14" viewBox="0 0 24 24">
+            <path fill="white" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="white" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="white" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+            <path fill="white" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Google দিয়ে সাইন ইন
+        </button>`;
+    }
+  }
+
+  // ============================================================
+  //  Navigation
+  // ============================================================
+  window.showPage = page => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nl').forEach(l => l.classList.remove('active'));
+    document.getElementById('page-'+page)?.classList.add('active');
+    document.getElementById('nav-'+page)?.classList.add('active');
+    if(page === 'donate') renderDonatePage();
+  };
+
+  // ============================================================
+  //  Toast
+  // ============================================================
+  window.showToast = (msg, type='s') => {
+    const el = document.getElementById('toast');
+    el.className = type; el.textContent = msg; el.style.display = 'flex';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.style.display = 'none', 3500);
+  };
+
+  // ============================================================
+  //  Boot
+  // ============================================================
+  initBloodPills();
+  renderNavAuth();
+  renderDonatePage();
+  // Hide splash after Firebase ready
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+</script>
+</body>
+</html>
