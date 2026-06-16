@@ -322,9 +322,12 @@
   const db    = getFirestore(fbApp);
   const gProv = new GoogleAuthProvider();
 
-  // Init invisible reCAPTCHA
-  function initRecaptcha() {
-    if (recaptchaVerifier) return;
+  // Create fresh reCAPTCHA each time
+  function freshRecaptcha() {
+    try {
+      if (recaptchaVerifier) { recaptchaVerifier.clear(); recaptchaVerifier = null; }
+    } catch(e) {}
+    document.getElementById('recaptcha-container').innerHTML = '';
     recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
       size: 'invisible',
       callback: () => {}
@@ -371,15 +374,15 @@
     btn.disabled = true; btn.textContent = 'পাঠানো হচ্ছে...';
 
     try {
-      initRecaptcha();
+      freshRecaptcha();
       confirmationResult = await signInWithPhoneNumber(auth, bdPhone, recaptchaVerifier);
       showOTPBox(phone);
       showToast('OTP পাঠানো হয়েছে! 📱','i');
     } catch(e) {
       btn.disabled = false; btn.textContent = 'OTP পাঠান';
       // Reset recaptcha on error
-      recaptchaVerifier?.clear();
-      recaptchaVerifier = null;
+      try { if(recaptchaVerifier){recaptchaVerifier.clear();recaptchaVerifier=null;} } catch(e){}
+      document.getElementById('recaptcha-container').innerHTML = '';
       showToast('OTP পাঠাতে ব্যর্থ: ' + (e.message||e.code), 'e');
     }
   };
